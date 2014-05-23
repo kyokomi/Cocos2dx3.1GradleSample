@@ -1,0 +1,144 @@
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.10.+'
+    }
+}
+
+project(':cocos2d:cocos:platform:android:java') {
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+        dependencies {
+            classpath 'com.android.tools.build:gradle:0.10.+'
+        }
+    }
+}
+
+
+apply plugin: 'android'
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile fileTree(dir: 'libs/armeabi', include: '*/so')
+    compile 'com.android.support:support-v4:+'
+    compile project(':cocos2d:cocos:platform:android:java')
+}
+
+
+allprojects {
+    tasks.withType(Compile) {
+        options.encoding = 'UTF-8'
+    }
+}
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19.0.3"
+
+    defaultConfig {
+        versionCode 1
+        versionName "1.0"
+        minSdkVersion 9
+        targetSdkVersion 10
+    }
+    // 複数のバージョン作りたいなら
+   // productFlavors {
+   //     dev {
+   //         versionCode 1
+   //         versionName "1.0"
+   //     }
+   //     pro {
+   //         versionCode 1
+   //         versionName "1.0"
+   //     }
+   // }
+    
+    // 署名関係
+    signingConfigs {
+        debug {
+            //storeFile file("signingConfigs/debug.keystore")
+        }
+    }
+    
+    buildTypes {
+        debug {
+            packageNameSuffix ".debug"
+            // 署名と難読化はやらない
+            debuggable true
+            jniDebugBuild true
+            zipAlign true
+//          runProguard true
+//          proguardFile getDefaultProguardFile('proguard-android.txt')
+        }
+    }
+ 
+  sourceSets {
+    main {
+      manifest.srcFile 'AndroidManifest.xml'
+      java.srcDirs = ['src']
+      resources.srcDirs = ['src']
+      aidl.srcDirs = ['src']
+      renderscript.srcDirs = ['src']
+      res.srcDirs = ['res']
+      assets.srcDirs = ['assets']
+    }
+  }   
+}
+
+
+task resourcesCopy(dependsOn: "resourcesClean", type: Copy) {
+    from "../Resources"
+    into "assets"
+}
+
+task resourcesDelete(type: Delete) {
+  delete "assets"
+}
+
+task resourcesClean (dependsOn: "resourcesDelete" )<< {
+    def classesDir = new File("assets")
+    classesDir.mkdirs()
+}
+
+task ndkBuild(type:Exec) {
+    commandLine 'ndk-build', "-j8"
+}
+
+task ndkClean(type:Exec) {
+    commandLine 'ndk-build', 'clean'
+}
+
+task libsClean(type: Delete) {
+  delete 'libs/armeabi', 'libs/armeabi-v7a', 'libs/x86', 'libs/mips'
+}
+
+task objClean(type: Delete) {
+  delete 'obj'
+}
+
+if(new File(projectDir, "jni").exists()){
+    tasks.withType(Compile) {
+        compileTask -> compileTask.dependsOn ndkBuild
+    }
+
+    
+    tasks.withType(Compile) {
+        compileTask -> compileTask.dependsOn resourcesCopy
+    }
+
+    //mod see http://stackoverflow.com/questions/20704812/android-studio-0-4-could-not-find-method-jnidir
+    tasks.withType(com.android.build.gradle.tasks.PackageApplication) {pkgTask ->
+        pkgTask.jniFolders = new HashSet<File>()
+        pkgTask.jniFolders.add(new File(projectDir, 'libs'))
+    }
+
+    clean.dependsOn 'ndkClean'
+    clean.dependsOn 'libsClean'
+    clean.dependsOn 'objClean'
+}
+
