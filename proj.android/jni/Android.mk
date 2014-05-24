@@ -45,8 +45,13 @@ $(call import-add-path,$(COCOS2DX_ROOT)/cocos/platform/android)
 
 $(call import-module,.)
 $(call import-module,audio/android)
-$(call import-module,editor-support/spine)
-$(call import-module,editor-support/cocostudio)
-
 $(call import-module,platform/android)
+
+# この辺はお好みで
+# $(call import-module,Box2D)
+# $(call import-module,editor-support/cocostudio)
+# $(call import-module,editor-support/spine)
+# $(call import-module,editor-support/cocosbuilder)
+# $(call import-module,network)
+# $(call import-module,extensions)
 

@@ -23,8 +23,6 @@ project(':cocos2d:cocos:platform:android:java') {
 apply plugin: 'android'
 
 dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
-    compile fileTree(dir: 'libs/armeabi', include: '*/so')
     compile 'com.android.support:support-v4:+'
     compile project(':cocos2d:cocos:platform:android:java')
 }
@@ -42,29 +40,31 @@ android {
 
     defaultConfig {
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1"
         minSdkVersion 9
-        targetSdkVersion 10
+        targetSdkVersion 19
     }
-    // 複数のバージョン作りたいなら
-   // productFlavors {
-   //     dev {
-   //         versionCode 1
-   //         versionName "1.0"
-   //     }
-   //     pro {
-   //         versionCode 1
-   //         versionName "1.0"
-   //     }
-   // }
-    
+
+//    // 複数のバージョン作りたいなら
+//    productFlavors {
+//       dev {
+//           versionCode 1
+//           versionName "1.0"
+//       }
+//       pro {
+//           versionCode 1
+//           versionName "1.0"
+//       }
+//    }
+
+
     // 署名関係
     signingConfigs {
         debug {
-            //storeFile file("signingConfigs/debug.keystore")
+//            storeFile file("signingConfigs/debug.keystore")
         }
     }
-    
+
     buildTypes {
         debug {
             packageNameSuffix ".debug"
@@ -76,18 +76,18 @@ android {
 //          proguardFile getDefaultProguardFile('proguard-android.txt')
         }
     }
- 
-  sourceSets {
-    main {
-      manifest.srcFile 'AndroidManifest.xml'
-      java.srcDirs = ['src']
-      resources.srcDirs = ['src']
-      aidl.srcDirs = ['src']
-      renderscript.srcDirs = ['src']
-      res.srcDirs = ['res']
-      assets.srcDirs = ['assets']
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
     }
-  }   
 }
 
 
@@ -97,16 +97,18 @@ task resourcesCopy(dependsOn: "resourcesClean", type: Copy) {
 }
 
 task resourcesDelete(type: Delete) {
-  delete "assets"
+    delete "assets"
 }
 
-task resourcesClean (dependsOn: "resourcesDelete" )<< {
+task resourcesClean (dependsOn: "resourcesDelete" ) << {
     def classesDir = new File("assets")
     classesDir.mkdirs()
 }
 
 task ndkBuild(type:Exec) {
-    commandLine 'ndk-build', "-j8"
+    def cpu_num = Runtime.getRuntime().availableProcessors()
+    println "cpu_num=${cpu_num}"
+    commandLine 'ndk-build', "-j${cpu_num}"
 }
 
 task ndkClean(type:Exec) {
@@ -114,19 +116,19 @@ task ndkClean(type:Exec) {
 }
 
 task libsClean(type: Delete) {
-  delete 'libs/armeabi', 'libs/armeabi-v7a', 'libs/x86', 'libs/mips'
+    delete 'libs/armeabi', 'libs/armeabi-v7a', 'libs/x86', 'libs/mips'
 }
 
 task objClean(type: Delete) {
-  delete 'obj'
+    delete 'obj'
 }
 
-if(new File(projectDir, "jni").exists()){
+if (new File(projectDir, "jni").exists()) {
     tasks.withType(Compile) {
         compileTask -> compileTask.dependsOn ndkBuild
     }
 
-    
+
     tasks.withType(Compile) {
         compileTask -> compileTask.dependsOn resourcesCopy
     }
@@ -141,4 +143,3 @@ if(new File(projectDir, "jni").exists()){
     clean.dependsOn 'libsClean'
     clean.dependsOn 'objClean'
 }
-
